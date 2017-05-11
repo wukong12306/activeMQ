@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans  
+http://www.springframework.org/schema/beans/spring-beans-3.2.xsd  
+http://www.springframework.org/schema/context  
+http://www.springframework.org/schema/context/spring-context-3.2.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!--上面的xsd最好和当前使用的Spring版本号一致,如果换了Spring版本,这个最好也跟着改-->
+
+    <!-- 引入属性文件 放在最开头,在使用spring之前就引入,里面的变量才能被引用-->
+    <context:property-placeholder location="classpath:*.properties"/>
+
+    <!--active 自己的工厂-->
+    <bean id="targetConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="userName" value="admin"></property>
+        <property name="password" value="admin"></property>
+        <property name="brokerURL" value="tcp://192.168.78.101:61616"></property>
+    </bean>
+
+    <!--active 自己的连接池-->
+    <bean id="pooledConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory">
+        <property name="connectionFactory" ref="targetConnectionFactory"></property>
+        <property name="maxConnections" value="123"></property>
+    </bean>
+    <!--spring 代理 工厂和连接池-->
+    <bean id="connectionFactory" class="org.springframework.jms.connection.SingleConnectionFactory">
+        <property name="targetConnectionFactory" ref="pooledConnectionFactory"></property>
+    </bean>
+
+    <!--spring session管理 -->
+    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory" ref="connectionFactory" ></property>
+        <property name="defaultDestinationName" value="mail"></property>
+    </bean>
+    <!--
+    引入属性文件也可以用这种写法
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:config.properties" />
+    </bean>
+    -->
+
+    <!-- 自动扫描(需要自动注入的类，对于那些类上有注解：@Repository、@Service、@Controller、@Component都进行注入) -->
+    <!--因为 Spring MVC 是 Spring 的子容器，所以我们在 Spring MVC 的配置中再指定扫描 Controller 的注解，这里是父容器的配置地方-->
+    <!--注解注入的相关材料可以看：-->
+    <!--http://blog.csdn.net/u012763117/article/details/17253849-->
+    <!--http://casheen.iteye.com/blog/295348-->
+    <!--http://blog.csdn.net/zhang854429783/article/details/6785574-->
+    <!--<context:component-scan base-package="com.youmeek.**.service,com.youmeek.**.mapper"/>-->
+
+
+</beans>
